@@ -1,0 +1,24 @@
+Default Audio Changer is a program that can change the default audio device on a Vista & Windows 7 OS-es. It is especially useful if you're like me and have a sound card with speakers attached and a USB headset/headphones.
+It is made for lazy people, so if you're not lazy, you can continue to use the control panel application (mmsys.cpl).
+
+Running it for the first time, just loads the application. Any subsequent launches, will just switch the default audio device as per your settings.
+
+This is a solution created with Visual Studio 2010 Professional, but it "should" be usable on an Express edition. It is using WTL 8.1. You can obtain it from http://sourceforge.net/projects/wtl/files/ .
+To compile it, just grab the source code, open the solution (.sln) file, update the include path to where WTL include files are (e.g. c:\WTL81\include), and recompile.
+
+To use it, just grab the appropriate file from the releases directory:
+
+DefaultAudioChanger.zip - for x86 OS-es.
+DefaultAudioChanger_x64.zip - for x64 OS-es.
+
+Usage
+=======
+WARNING: It has only been tested on Windows 7, with all the latest patches applied as of September 26, 2011. Since it is using an undocumented interface it may stop working at any point in time in the future, next patch, next service pack or next version.
+If it's not working for you...tough luck.
+
+Extract the zip file in some directory. Double-click on the executable. It will add an icon to your tray area. Additionally, if you're running the program for the first time, it will display the settings window. 
+In this window all the active audio interfaces in the system are displayed. Please check those that you want the program to switch between. Now you can either minimize the window or click the Hide button.
+
+Launch the application again. Notice how it cycles between the selected audio devices. If you have a program that uses the audio, you will also notice where the sound will be heard.
+
+This application, while simple, can and probably has bugs. If you think you've found any, just create an issue on github, they'll make sure it gets to me.
