@@ -10,6 +10,8 @@
 #define IDC_HIDE_BUTTON                 1001
 #define IDC_DEVICES_LIST                1002
 #define IDC_SWITCH_BUTTON               1003
+#define IDC_DESC_STATIC                 1004
+#define IDC_GPL_LINK_STATIC             1005
 #define ID_POPUPMENU_OPTIONS            32775
 #define ID_POPUPMENU_EXIT               32776
 #define ID_POPUPMENU_                   32777
@@ -21,7 +23,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        202
 #define _APS_NEXT_COMMAND_VALUE         32779
-#define _APS_NEXT_CONTROL_VALUE         1004
+#define _APS_NEXT_CONTROL_VALUE         1006
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

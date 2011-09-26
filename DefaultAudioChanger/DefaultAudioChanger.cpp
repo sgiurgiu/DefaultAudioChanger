@@ -1,5 +1,20 @@
-// DefaultAudioChanger.cpp : main source file for DefaultAudioChanger.exe
-//
+/******************************************************************************
+* This file is part of DefaultAudioChanger.
+* Copyright (c) 2011 Sergiu Giurgiu 
+*
+* DefaultAudioChanger is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* DefaultAudioChanger is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with DefaultAudioChanger.  If not, see <http://www.gnu.org/licenses/>.
+******************************************************************************/
 
 #include "stdafx.h"
 
@@ -76,7 +91,7 @@ void SendServerSwitchMessage()
 		// Display the error message and exit the process
 
 		lpDisplayBuf = (LPVOID)LocalAlloc(LMEM_ZEROINIT, 
-			(lstrlen((LPCTSTR)lpMsgBuf)) * sizeof(TCHAR)); 
+			(lstrlen((LPCTSTR)lpMsgBuf)+40) * sizeof(TCHAR)); 
 		StringCchPrintf((LPTSTR)lpDisplayBuf, 
 			LocalSize(lpDisplayBuf) / sizeof(TCHAR),
 			TEXT("failed with error %d: %s"), 
@@ -117,7 +132,7 @@ void SendServerSwitchMessage()
 		// Display the error message and exit the process
 
 		lpDisplayBuf = (LPVOID)LocalAlloc(LMEM_ZEROINIT, 
-			(lstrlen((LPCTSTR)lpMsgBuf)) * sizeof(TCHAR)); 
+			(lstrlen((LPCTSTR)lpMsgBuf)+40) * sizeof(TCHAR)); 
 		StringCchPrintf((LPTSTR)lpDisplayBuf, 
 			LocalSize(lpDisplayBuf) / sizeof(TCHAR),
 			TEXT("failed with error %d: %s"), 

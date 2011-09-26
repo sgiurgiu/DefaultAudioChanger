@@ -58,15 +58,16 @@ IDR_MAINFRAME           ICON                    "res\\DefaultAudioChanger.ico"
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOG 0, 0, 187, 102
-STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_ABOUTBOX DIALOGEX 0, 0, 187, 102
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About"
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,130,81,50,14
-    CTEXT           "DefaultAudioChanger Application v1.0\n\n(c) Copyright 2011",IDC_STATIC,25,57,78,32
-    ICON            IDR_MAINFRAME,IDC_STATIC,55,26,18,20
+    CTEXT           "Default Audio Changer v1.0\n\n(c) Copyright 2011 Sergiu Giurgiu ",IDC_DESC_STATIC,7,39,114,32
+    ICON            IDR_MAINFRAME,IDC_STATIC,55,15,21,20
     GROUPBOX        "",IDC_STATIC,7,7,115,88
+    CTEXT           "Licensed under the GPL",IDC_GPL_LINK_STATIC,15,78,102,8
 END
 
 IDD_MAINDLG DIALOGEX 0, 0, 301, 151

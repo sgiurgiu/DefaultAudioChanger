@@ -5,6 +5,7 @@ Running it for the first time, just loads the application. Any subsequent launch
 
 This is a solution created with Visual Studio 2010 Professional, but it "should" be usable on an Express edition. It is using WTL 8.1. You can obtain it from http://sourceforge.net/projects/wtl/files/ .
 To compile it, just grab the source code, open the solution (.sln) file, update the include path to where WTL include files are (e.g. c:\WTL81\include), and recompile.
+Also, I have been using Windows SDK 7.1 , though I don't believe I'm using anything in particular from it, therefore the SDK that VS2010 comes with should be fine.
 
 To use it, just grab the appropriate file from the releases directory:
 
