@@ -214,3 +214,46 @@ Exit:
 
 	return audioDevice;
 }
+
+HRESULT CDevicesManager::ClearAbsentDevices(PHKEY pkey)
+{
+	HRESULT hr=S_OK;	
+	DWORD index=0;	
+	DWORD lpcValues,lpcMaxValueNameLen;
+	HKEY key;
+	key=*pkey;
+	LONG result=::RegQueryInfoKey(key,NULL,NULL,NULL,NULL,NULL,NULL,&lpcValues,&lpcMaxValueNameLen,NULL,NULL,NULL);	
+	if(lpcValues<=0) return hr;
+
+	std::vector<LPWSTR> ids;
+	for(DWORD i=0;i<lpcValues;i++)
+	{
+		DWORD len=lpcMaxValueNameLen+1;
+		WCHAR *valName=new WCHAR[len];
+		::RegEnumValue(key,i,valName,&len,NULL,REG_NONE,NULL,NULL);
+		ids.push_back(valName);
+	}
+
+	for(DWORD i=0;i<lpcValues;i++)
+	{
+		LPWSTR id=ids[i];
+		bool found=false;
+		for(auto it=devices.cbegin();it!=devices.cend();++it)
+		{
+			LPWSTR devKey=(*it).deviceId;
+			if(!wcscmp(id,devKey))
+			{
+				found=true;
+				break;
+			}
+		}
+
+		if(!found)
+		{
+			hr=::RegDeleteValue(key,id);			
+		}
+	}
+
+
+	return S_OK;
+}

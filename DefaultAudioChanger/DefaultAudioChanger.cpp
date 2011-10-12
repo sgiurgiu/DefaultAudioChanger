@@ -227,6 +227,15 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 		return -1;
 	}
 
+	//this removes the devices that were present in the system and selected for switch and are
+	//no longer available (because the user may have switched audio cards for example, added new ones
+	//or removed some)
+	if(FAILED(devicesManager.ClearAbsentDevices(&deviceSettingsKey)))
+	{
+		::MessageBox(NULL,L"Cannot clear old devices from registry",L"Error",MB_OK|MB_ICONERROR);
+		return -1;
+	}
+
 	HANDLE pipe=::CreateNamedPipe(PIPE_NAME,
 		PIPE_ACCESS_DUPLEX|FILE_FLAG_FIRST_PIPE_INSTANCE,
 		PIPE_TYPE_MESSAGE|PIPE_READMODE_MESSAGE|PIPE_WAIT,

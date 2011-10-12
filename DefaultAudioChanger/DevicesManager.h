@@ -21,6 +21,7 @@ public:
 	const std::vector<AUDIODEVICE>* GetAudioDevices() const;
 	HRESULT SwitchDevices(std::vector<LPWSTR> *ids);
 	HRESULT SetDefaultDevice(LPWSTR id);
+	HRESULT ClearAbsentDevices(PHKEY pkey);
 private:
 	UINT ExtractDeviceIcons(LPWSTR iconPath,HICON *iconLarge,HICON *iconSmall);
 private:
