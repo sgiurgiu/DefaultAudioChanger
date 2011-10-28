@@ -22,4 +22,6 @@ In this window all the active audio interfaces in the system are displayed. Plea
 
 Launch the application again. Notice how it cycles between the selected audio devices. If you have a program that uses the audio, you will also notice where the sound will be heard.
 
+Starting with version 1.0.2 hotkey switching is supported. In the option's dialog, click on the hotkey checkbox and register your hotkey. You can now switch the devices using a simple keystroke.
+
 This application, while simple, can and probably has bugs. If you think you've found any, just create an issue on github, they'll make sure it gets to me.
