@@ -1,0 +1,17 @@
+Version 1.0.2 - October 27, 2011
+--------------------------------
+Added hotkey support. Now the user can setup a hotkey to do the switching. No more need to launch the application 
+(even though the behaviour will still work), or to click the switch button.
+
+Version 1.0.1 - October 12, 2011
+--------------------------------
+Fixed issue #1 with the application.
+Issue was that when a device that was in the switch list was removed from the computer, it would still remain in the switch list, thus making the switching innefective.
+The resolution was that upon application startup, remove all the non-existant devices from the switch list. The application still doesn't listen for
+a device removal notification from Windows, but that'll be for issue #2 whenever i'll file it.
+
+
+Version 1.0  - September 26, 2011 
+---------------------------------
+
+Initial 1.0 release of the application. It contains the basic functions to provide the device switching ability.
