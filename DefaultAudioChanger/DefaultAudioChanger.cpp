@@ -28,6 +28,7 @@
 CAppModule _Module;
 CDevicesManager devicesManager;
 HKEY deviceSettingsKey;
+HKEY appSettingsKey;
 CMainDlg dlgMain;
 
 #define PIPE_NAME L"\\\\.\\pipe\\DefaultAudioChangerPipe"
@@ -40,6 +41,7 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL)
 	
 	dlgMain.SetDevicesManager(&devicesManager);
 	dlgMain.SetDeviceSettingsKey(deviceSettingsKey);
+	dlgMain.SetAppSettingsKey(appSettingsKey);
 
 	if(dlgMain.Create(NULL) == NULL)
 	{
@@ -221,6 +223,14 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 	
 	result=::RegCreateKeyEx(currentUser,L"Software\\Zergiu.com\\DAC\\Devices",0,
 		NULL,REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,&deviceSettingsKey,NULL);
+	if(result!=ERROR_SUCCESS)
+	{
+		::MessageBox(NULL,L"Cannot open current's user registry key",L"Error",MB_OK|MB_ICONERROR);
+		return -1;
+	}
+	
+	result=::RegCreateKeyEx(currentUser,L"Software\\Zergiu.com\\DAC\\Settings",0,
+		NULL,REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,&appSettingsKey,NULL);
 	if(result!=ERROR_SUCCESS)
 	{
 		::MessageBox(NULL,L"Cannot open current's user registry key",L"Error",MB_OK|MB_ICONERROR);

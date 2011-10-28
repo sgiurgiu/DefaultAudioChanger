@@ -41,6 +41,9 @@ public:
 		COMMAND_ID_HANDLER(ID_POPUPMENU_SWITCH,OnBnClickedSwitchButton)
 		NOTIFY_HANDLER(IDC_DEVICES_LIST,LVN_ITEMCHANGED,OnItemChanged)
 		COMMAND_RANGE_HANDLER(WM_USER+1,WM_USER+100,OnSpecificDeviceSelected)/*This means we can only have 100 devices*/
+		COMMAND_HANDLER(IDC_HOTKEY_CHECK, BN_CLICKED, OnBnClickedHotkeyCheck)
+		COMMAND_HANDLER(IDC_REGHOTKEY, EN_CHANGE, OnHotKeyChange)
+		MESSAGE_HANDLER(WM_HOTKEY, OnHotKey)
 	END_MSG_MAP()
 
 // Handler prototypes (uncomment arguments if needed):
@@ -48,6 +51,8 @@ public:
 //	LRESULT CommandHandler(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 //	LRESULT NotifyHandler(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/)
 	
+	LRESULT OnHotKey(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnHotKeyChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnSpecificDeviceSelected(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnItemChanged(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/);	
 	HBRUSH OnCtlColorStatic(CDCHandle dc, CStatic wndStatic);
@@ -65,8 +70,13 @@ public:
 	BOOL ShowTrayIcon();
 	void SetDevicesManager(CDevicesManager* devicesManager);
 	LRESULT OnBnClickedSwitchButton(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnBnClickedHotkeyCheck(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	void SetDeviceSettingsKey(HKEY key);
+	void SetAppSettingsKey(HKEY key);
 	void UpdateApplicationIcon();
+private:
+	BYTE hkf2modf(BYTE hkf);
+	BYTE modf2hkf(BYTE modf);
 private:
 	NOTIFYICONDATA notifyIconData;
 	CDevicesManager* devicesManager;
@@ -74,6 +84,8 @@ private:
 	CMenu popupMenu;
 	HBRUSH m_hDialogBrush;
 	HKEY deviceSettingsKey;
-public:
-	
+	HKEY appSettingsKey;
+	CButton hotKeyCheckBox;
+	CHotKeyCtrl hotKeyCtrl;
+	ATOM hotKeyId;
 };

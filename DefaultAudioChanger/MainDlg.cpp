@@ -113,7 +113,30 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 
 	delete[] keyName;
 
-	
+	hotKeyCheckBox.Attach(GetDlgItem(IDC_HOTKEY_CHECK));
+	hotKeyCtrl.Attach(GetDlgItem(IDC_REGHOTKEY));
+	hotKeyId=GlobalAddAtom(L"DefaultAudioChange");
+	WORD hotKey;
+	DWORD hotKeysize=sizeof(DWORD);
+	regOpResult=::RegQueryValueEx(appSettingsKey,L"HotKey",NULL,NULL,(LPBYTE)&hotKey,&hotKeysize);
+	if(regOpResult==ERROR_SUCCESS)
+	{
+		::SendMessage(hotKeyCtrl.m_hWnd, HKM_SETHOTKEY, hotKey, 0L);		
+		hotKeyCheckBox.SetCheck(TRUE);
+		hotKeyCtrl.EnableWindow(TRUE);
+		WORD wVirtualKeyCode = LOBYTE(LOWORD(hotKey));
+		WORD wModifiers = HIBYTE(LOWORD(hotKey));
+		if(!RegisterHotKey(m_hWnd,hotKeyId,hkf2modf(wModifiers),wVirtualKeyCode))
+		{
+		
+			int a=1;
+		}
+	}
+	else
+	{
+
+	}
+
 //	this->SetWindowLong();
 	return bHandled=FALSE;
 }
@@ -258,7 +281,9 @@ LRESULT CMainDlg::OnBtnClose(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, B
 
 void CMainDlg::CloseDialog(int nVal)
 {
-	DestroyWindow();
+	UnregisterHotKey(m_hWnd,hotKeyId);
+	GlobalDeleteAtom(hotKeyId);
+	DestroyWindow();	
 	::PostQuitMessage(nVal);
 }
 
@@ -308,6 +333,11 @@ void CMainDlg::SetDeviceSettingsKey(HKEY key)
 	deviceSettingsKey=key;
 }
 
+void CMainDlg::SetAppSettingsKey(HKEY key)
+{
+	appSettingsKey=key;
+}
+
 LRESULT CMainDlg::OnItemChanged(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled)
 {
 	LPNMLISTVIEW pNMListView=(LPNMLISTVIEW)pnmh;
@@ -353,5 +383,76 @@ LRESULT CMainDlg::OnItemChanged(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled)
 	}
 
 	bHandled=true;
+	return 0;
+}
+
+LRESULT CMainDlg::OnBnClickedHotkeyCheck(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& bHandled)
+{
+	BOOL checked=hotKeyCheckBox.GetCheck();
+	hotKeyCtrl.EnableWindow(checked);
+	if(!checked)
+	{
+		LONG result=::RegDeleteKeyValue(appSettingsKey,NULL,L"HotKey");
+		UnregisterHotKey(m_hWnd,hotKeyId);
+		hotKeyCtrl.SetHotKey(0,0);
+	}
+	else
+	{
+		WORD hotKey;
+		DWORD hotKeysize=sizeof(WORD);
+		LONG result=::RegQueryValueEx(appSettingsKey,L"HotKey",NULL,NULL,(LPBYTE)&hotKey,&hotKeysize);
+		if(result==ERROR_SUCCESS)
+		{
+			::SendMessage(hotKeyCtrl.m_hWnd, HKM_SETHOTKEY, hotKey, 0L);		
+		}
+	}
+	bHandled=true;
+	return 0;
+}
+
+BYTE CMainDlg::hkf2modf(BYTE hkf)
+{
+	BYTE modf = 0;
+	if (hkf & HOTKEYF_ALT) modf |= MOD_ALT;
+	if (hkf & HOTKEYF_SHIFT) modf |= MOD_SHIFT;
+	if (hkf & HOTKEYF_CONTROL) modf |= MOD_CONTROL;
+	if (hkf & HOTKEYF_EXT) modf |= MOD_WIN;
+	return modf;
+}
+BYTE CMainDlg::modf2hkf(BYTE modf)
+{
+	BYTE hkf=0;
+	if(modf & MOD_ALT) hkf|=HOTKEYF_ALT;
+	if(modf & MOD_SHIFT) hkf|=HOTKEYF_SHIFT;
+	if(modf & MOD_CONTROL) hkf|=HOTKEYF_CONTROL;
+	if(modf & MOD_WIN) hkf|=HOTKEYF_EXT;
+	return hkf;
+}
+
+LRESULT CMainDlg::OnHotKeyChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	WORD hotKey;
+	DWORD hotKeysize=sizeof(WORD);
+	WORD wVirtualKeyCode,wModifiers ;
+	hotKeyCtrl.GetHotKey(wVirtualKeyCode, wModifiers);
+	hotKey=MAKEWORD(wVirtualKeyCode, wModifiers);
+	LONG result=::RegSetValueEx(appSettingsKey,L"HotKey",NULL,REG_BINARY,(BYTE*)&hotKey,sizeof(hotKeysize));
+	UnregisterHotKey(m_hWnd,hotKeyId);
+	ATLTRACE2(L"wVirtualKeyCode:= %d, wModifiers=%d\n",wVirtualKeyCode,wModifiers);
+	if(!RegisterHotKey(m_hWnd,hotKeyId,hkf2modf(wModifiers),wVirtualKeyCode))
+	{
+		::MessageBox(m_hWnd,L"Cannot register this hotkey",L"Error",MB_OK|MB_ICONERROR);
+	}
+
+	return 0;
+}
+
+LRESULT CMainDlg::OnHotKey(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
+{
+	if(wParam==hotKeyId)
+	{
+		return OnBnClickedSwitchButton(0,0,0,bHandled);	
+	}
+
 	return 0;
 }
