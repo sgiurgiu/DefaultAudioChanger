@@ -1,3 +1,8 @@
+Version 1.0.3 - December 1, 2011
+--------------------------------
+Added abitlity to automatically update the registry to make the application startup upon logging in (startup).
+
+
 Version 1.0.2 - October 27, 2011
 --------------------------------
 Added hotkey support. Now the user can setup a hotkey to do the switching. No more need to launch the application 
