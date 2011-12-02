@@ -44,6 +44,7 @@ public:
 		COMMAND_HANDLER(IDC_HOTKEY_CHECK, BN_CLICKED, OnBnClickedHotkeyCheck)
 		COMMAND_HANDLER(IDC_REGHOTKEY, EN_CHANGE, OnHotKeyChange)
 		MESSAGE_HANDLER(WM_HOTKEY, OnHotKey)
+		COMMAND_HANDLER(IDC_WINSTARTUP_CHECK, BN_CLICKED, OnBnClickedWinstartupCheck)
 	END_MSG_MAP()
 
 // Handler prototypes (uncomment arguments if needed):
@@ -77,6 +78,10 @@ public:
 private:
 	BYTE hkf2modf(BYTE hkf);
 	BYTE modf2hkf(BYTE modf);
+	void LoadInitialDeviceList();
+	BOOL LoadDevicesIcons();
+	void LoadHotkey();
+	void LoadStartupSetting();
 private:
 	NOTIFYICONDATA notifyIconData;
 	CDevicesManager* devicesManager;
@@ -86,6 +91,9 @@ private:
 	HKEY deviceSettingsKey;
 	HKEY appSettingsKey;
 	CButton hotKeyCheckBox;
+	CButton startupCheckBox;
 	CHotKeyCtrl hotKeyCtrl;
 	ATOM hotKeyId;
+public:
+	LRESULT OnBnClickedWinstartupCheck(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 };

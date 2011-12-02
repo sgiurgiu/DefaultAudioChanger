@@ -23,6 +23,8 @@
 #include "MainDlg.h"
 #include "DevicesManager.h"
 
+#define STARTUP_KEY _T("DefaultAudioChanger")
+
 CMainDlg::CMainDlg()
 {
 	ZeroMemory(&notifyIconData, sizeof notifyIconData);
@@ -47,21 +49,11 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	CenterWindow();
 
 
-
-
 	// set icons
-	const PAUDIODEVICE defaultDevice=devicesManager->GetDefaultDevice();
-	if(defaultDevice)
+	if(!LoadDevicesIcons())
 	{
-		SetIcon(defaultDevice->largeIcon, TRUE);
-		SetIcon(defaultDevice->smallIcon, FALSE);
-	}
-	else
-	{
-		::MessageBox(NULL,L"Cannot determine the default device",L"Error",MB_OK|MB_ICONERROR);
 		return FALSE;
 	}
-
 	// register object for message filtering and idle updates
 	CMessageLoop* pLoop = _Module.GetMessageLoop();
 	ATLASSERT(pLoop != NULL);
@@ -69,12 +61,86 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	pLoop->AddIdleHandler(this);
 
 	UIAddChildWindowContainer(m_hWnd);
-
 	
+	LoadInitialDeviceList();
+
+	LoadHotkey();
+
+	LoadStartupSetting();
+
+//	this->SetWindowLong();
+	return bHandled=FALSE;
+}
+
+void CMainDlg::LoadStartupSetting()
+{
+	startupCheckBox.Attach(GetDlgItem(IDC_WINSTARTUP_CHECK));
+	HKEY currentUser;
+	LONG result=::RegOpenCurrentUser(KEY_ALL_ACCESS,&currentUser);
+	if(result!=ERROR_SUCCESS)
+	{		
+		return ;//oh well....
+	}
+	HKEY winRunKey;
+	result=::RegOpenKeyEx(currentUser,_T("Software\\Microsoft\\Windows\\CurrentVersion\\Run"),REG_OPTION_NON_VOLATILE,
+		KEY_ALL_ACCESS,&winRunKey);
+	if(result!=ERROR_SUCCESS)
+	{
+		return;//oh well....
+	}
+	DWORD keyType;
+	result=::RegGetValue(winRunKey,NULL,STARTUP_KEY,RRF_RT_REG_SZ,&keyType,NULL,NULL);
+	startupCheckBox.SetCheck(result==ERROR_SUCCESS);
+	RegCloseKey (winRunKey);
+	RegCloseKey (currentUser);
+}
+
+void CMainDlg::LoadHotkey()
+{
+	hotKeyCheckBox.Attach(GetDlgItem(IDC_HOTKEY_CHECK));
+	hotKeyCtrl.Attach(GetDlgItem(IDC_REGHOTKEY));
+
+	hotKeyId=GlobalAddAtom(L"DefaultAudioChange");
+	WORD hotKey;
+	DWORD hotKeysize=sizeof(DWORD);
+	HRESULT regOpResult=::RegQueryValueEx(appSettingsKey,L"HotKey",NULL,NULL,(LPBYTE)&hotKey,&hotKeysize);
+	if(regOpResult==ERROR_SUCCESS)
+	{
+		::SendMessage(hotKeyCtrl.m_hWnd, HKM_SETHOTKEY, hotKey, 0L);		
+		hotKeyCheckBox.SetCheck(TRUE);
+		hotKeyCtrl.EnableWindow(TRUE);
+		WORD wVirtualKeyCode = LOBYTE(LOWORD(hotKey));
+		WORD wModifiers = HIBYTE(LOWORD(hotKey));
+		if(!RegisterHotKey(m_hWnd,hotKeyId,hkf2modf(wModifiers),wVirtualKeyCode))
+		{
+			//nothing really should happen here			
+		}
+	}
+}
+
+BOOL CMainDlg::LoadDevicesIcons()
+{
+	const PAUDIODEVICE defaultDevice=devicesManager->GetDefaultDevice();
+	if(defaultDevice)
+	{
+		SetIcon(defaultDevice->largeIcon, TRUE);
+		SetIcon(defaultDevice->smallIcon, FALSE);
+		return TRUE;
+	}
+	else
+	{
+		::MessageBox(NULL,L"Cannot determine the default device",L"Error",MB_OK|MB_ICONERROR);
+		return FALSE;
+	}
+}
+
+void CMainDlg::LoadInitialDeviceList()
+{
 	listView.Attach(GetDlgItem(IDC_DEVICES_LIST));
 	listView.SetExtendedListViewStyle(listView.GetExtendedListViewStyle()|LVS_EX_CHECKBOXES|
 		LVS_EX_AUTOSIZECOLUMNS|LVS_EX_DOUBLEBUFFER);	
 	listView.AddColumn(L"Device",0,0);
+
 	const std::vector<AUDIODEVICE>* audioDevices=devicesManager->GetAudioDevices();
 	CImageList imgList;
 	imgList.Create(16,16,ILC_COLOR32|ILC_ORIGINALSIZE|ILC_MASK,(int)audioDevices->size(),1);
@@ -84,6 +150,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	}
 
 	listView.SetImageList(imgList,LVSIL_SMALL);
+
 	DWORD lpcValues=0,lpcMaxValueNameLen=0;
 	LONG regOpResult=::RegQueryInfoKey(deviceSettingsKey,NULL,NULL,NULL,NULL,NULL,NULL,&lpcValues,&lpcMaxValueNameLen,NULL,NULL,NULL);	
 	WCHAR *keyName=new WCHAR[lpcMaxValueNameLen+1];
@@ -110,36 +177,10 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 		delete[] menuName;
 		count++;
 	}
-
 	delete[] keyName;
 
-	hotKeyCheckBox.Attach(GetDlgItem(IDC_HOTKEY_CHECK));
-	hotKeyCtrl.Attach(GetDlgItem(IDC_REGHOTKEY));
-	hotKeyId=GlobalAddAtom(L"DefaultAudioChange");
-	WORD hotKey;
-	DWORD hotKeysize=sizeof(DWORD);
-	regOpResult=::RegQueryValueEx(appSettingsKey,L"HotKey",NULL,NULL,(LPBYTE)&hotKey,&hotKeysize);
-	if(regOpResult==ERROR_SUCCESS)
-	{
-		::SendMessage(hotKeyCtrl.m_hWnd, HKM_SETHOTKEY, hotKey, 0L);		
-		hotKeyCheckBox.SetCheck(TRUE);
-		hotKeyCtrl.EnableWindow(TRUE);
-		WORD wVirtualKeyCode = LOBYTE(LOWORD(hotKey));
-		WORD wModifiers = HIBYTE(LOWORD(hotKey));
-		if(!RegisterHotKey(m_hWnd,hotKeyId,hkf2modf(wModifiers),wVirtualKeyCode))
-		{
-		
-			int a=1;
-		}
-	}
-	else
-	{
-
-	}
-
-//	this->SetWindowLong();
-	return bHandled=FALSE;
 }
+
 LRESULT CMainDlg::OnSpecificDeviceSelected(WORD wNotifyCode, WORD wID, HWND /*hWndCtl*/, BOOL& bHandled)
 {
 	WORD index=wID-WM_USER-1;
@@ -454,5 +495,52 @@ LRESULT CMainDlg::OnHotKey(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL
 		return OnBnClickedSwitchButton(0,0,0,bHandled);	
 	}
 
+	return 0;
+}
+
+LRESULT CMainDlg::OnBnClickedWinstartupCheck(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	HKEY currentUser;
+	LONG result=::RegOpenCurrentUser(KEY_ALL_ACCESS,&currentUser);
+	if(result!=ERROR_SUCCESS)
+	{	
+		::MessageBox(m_hWnd,L"Cannot open the registry",L"Error",MB_OK|MB_ICONERROR);
+		return 0;//oh well....
+	}
+	HKEY winRunKey;
+	result=::RegOpenKeyEx(currentUser,_T("Software\\Microsoft\\Windows\\CurrentVersion\\Run"),REG_OPTION_NON_VOLATILE,
+		KEY_ALL_ACCESS,&winRunKey);
+	if(result!=ERROR_SUCCESS)
+	{
+		::MessageBox(m_hWnd,L"Cannot open the registry",L"Error",MB_OK|MB_ICONERROR);
+		RegCloseKey (currentUser);
+		return 0;//oh well....
+	}
+	if(startupCheckBox.GetCheck())
+	{
+		TCHAR szFileName[MAX_PATH];
+		DWORD filenameLength=GetModuleFileName( NULL, szFileName, MAX_PATH );
+		if(filenameLength>0)
+		{
+			szFileName[filenameLength*sizeof(TCHAR)]=NULL;
+		}
+
+		result=::RegSetValueEx(winRunKey,STARTUP_KEY,NULL,REG_SZ,(BYTE*)&szFileName,filenameLength*sizeof(TCHAR));
+		if(result!=ERROR_SUCCESS)
+		{
+			::MessageBox(m_hWnd,L"Cannot save the preference in the registry",L"Error",MB_OK|MB_ICONERROR);
+		}
+	}
+	else
+	{
+		result=::RegDeleteKeyValue(winRunKey,NULL,STARTUP_KEY);
+		if(result!=ERROR_SUCCESS)
+		{
+			::MessageBox(m_hWnd,L"Cannot save the preference in the registry",L"Error",MB_OK|MB_ICONERROR);
+		}
+	}
+
+	RegCloseKey (winRunKey);
+	RegCloseKey (currentUser);
 	return 0;
 }

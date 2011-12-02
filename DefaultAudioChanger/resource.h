@@ -14,6 +14,8 @@
 #define IDC_GPL_LINK_STATIC             1005
 #define IDC_HOTKEY_CHECK                1007
 #define IDC_REGHOTKEY                   1009
+#define IDC_CHECK1                      1010
+#define IDC_WINSTARTUP_CHECK            1010
 #define ID_POPUPMENU_OPTIONS            32775
 #define ID_POPUPMENU_EXIT               32776
 #define ID_POPUPMENU_                   32777
@@ -25,7 +27,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        202
 #define _APS_NEXT_COMMAND_VALUE         32779
-#define _APS_NEXT_CONTROL_VALUE         1010
+#define _APS_NEXT_CONTROL_VALUE         1011
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
