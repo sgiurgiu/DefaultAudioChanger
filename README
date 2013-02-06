@@ -7,10 +7,9 @@ This is a solution created with Visual Studio 2010 Professional, but it "should"
 To compile it, just grab the source code, open the solution (.sln) file, update the include path to where WTL include files are (e.g. c:\WTL81\include), and recompile.
 Also, I have been using Windows SDK 7.1 , though I don't believe I'm using anything in particular from it, therefore the SDK that VS2010 comes with should be fine.
 
-To use it, just grab the appropriate file from the releases directory:
-
-DefaultAudioChanger.zip - for x86 OS-es.
-DefaultAudioChanger_x64.zip - for x64 OS-es.
+The downloads section has been removed from GitHub, therefore I moved them to SourceForge. The code will soon go there as well, even if this project
+is essentially done.
+Grab releases from [SourceForge](http://sourceforge.net/projects/defaultaudiocha/files/)
 
 Usage
 =======
