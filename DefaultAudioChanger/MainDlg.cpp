@@ -101,7 +101,7 @@ void CMainDlg::LoadHotkey()
 	hotKeyCtrl.Attach(GetDlgItem(IDC_REGHOTKEY));
 
 	hotKeyId=GlobalAddAtom(L"DefaultAudioChange");
-	WORD hotKey;
+	DWORD hotKey=0;
 	DWORD hotKeysize=sizeof(DWORD);
 	HRESULT regOpResult=::RegQueryValueEx(appSettingsKey,L"HotKey",NULL,NULL,(LPBYTE)&hotKey,&hotKeysize);
 	if(regOpResult==ERROR_SUCCESS)
