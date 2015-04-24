@@ -18,242 +18,287 @@
 
 #include "StdAfx.h"
 #include "DevicesManager.h"
+#include <Mmdeviceapi.h>
+#include "PolicyConfig.h"
+#include <Propidl.h>
+#include <Functiondiscoverykeys_devpkey.h>
+#include <algorithm>
 #include <strsafe.h>
+#include "MMNotificationClient.h"
 
 #define RETURN_ON_ERROR(hres)  \
               if (FAILED(hres)) { goto Exit; }
 
 #define SAFE_RELEASE(punk)  \
-              if ((punk) != NULL)  \
-                { (punk)->Release(); (punk) = NULL; }
+              if ((punk) != nullptr)  \
+                { (punk)->Release(); (punk) = nullptr; }
 
-CDevicesManager::CDevicesManager(void):pEnum(NULL)
+CDevicesManager::CDevicesManager(void) :pEnum(nullptr), client(nullptr)
 {
+
 }
 
 
 CDevicesManager::~CDevicesManager(void)
 {
-	for(auto it=devices.begin();it!=devices.end();++it)
-	{
-		delete[] (*it).deviceId;
-		delete[] (*it).deviceName;
-		DestroyIcon((*it).largeIcon);
-		DestroyIcon((*it).smallIcon);
-	}
-	devices.clear();
+    ReleaseDeviceEnumerator();
+    delete client;
 }
 
 void CDevicesManager::ReleaseDeviceEnumerator()
 {
-	SAFE_RELEASE(pEnum)
+    if (pEnum) {
+        pEnum->UnregisterEndpointNotificationCallback(client);
+    }	
+    SAFE_RELEASE(pEnum)
 }
 
 HRESULT CDevicesManager::InitializeDeviceEnumerator()
 {
-	if(!pEnum)
-	{
-		return CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL,
-			CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&pEnum);
-	}
-
-	return S_OK;
+    HRESULT hr = S_OK;
+    if(!pEnum)
+    {
+        hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL,
+            CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&pEnum);
+        client = new CMMNotificationClient(pEnum, this);
+        pEnum->RegisterEndpointNotificationCallback(client);
+    }
+    return hr;
 }
-HRESULT CDevicesManager::SwitchDevices(std::vector<LPWSTR> *ids)
+HRESULT CDevicesManager::SwitchDevices(const std::vector<std::wstring>& ids)
 {
-	if(ids->size()<=0 ||!ids) return E_FAIL;
-	const PAUDIODEVICE defaultDevice=GetDefaultDevice();
-	if(!defaultDevice) return E_FAIL;
-	int defaultDeviceIndex=-1;
-	int count=0;
-	for(auto it=ids->cbegin();it!=ids->cend();++it)
-	{
-		if(!wcscmp(defaultDevice->deviceId,(*it)))
-		{
-			defaultDeviceIndex=count;
-			break;
-		}
-		count++;
-	}
-	int newDefaultDeviceIndex=defaultDeviceIndex;
-	newDefaultDeviceIndex++;
-	if(newDefaultDeviceIndex>=(int)ids->size())
-	{
-		newDefaultDeviceIndex=0;
-	}
-
-	LPWSTR newId=ids->at(newDefaultDeviceIndex);
-	return SetDefaultDevice(newId);
+    if(ids.empty()) return E_FAIL;
+    AudioDevice defaultDevice;	
+    if (!GetDefaultDevice(defaultDevice)) return E_FAIL;
+    int defaultDeviceIndex=-1;
+    int count=0;
+    for(auto& id: ids)
+    {
+        if(defaultDevice.deviceId == id)
+        {
+            defaultDeviceIndex=count;
+            break;
+        }
+        count++;
+    }
+    int newDefaultDeviceIndex=defaultDeviceIndex;
+    newDefaultDeviceIndex++;
+    if(newDefaultDeviceIndex>=(int)ids.size())
+    {
+        newDefaultDeviceIndex=0;
+    }
+    return SetDefaultDevice(ids.at(newDefaultDeviceIndex));
 }
 
 
-HRESULT CDevicesManager::SetDefaultDevice(LPWSTR id)
+HRESULT CDevicesManager::SetDefaultDevice(const std::wstring& id)
 {
-	IPolicyConfigVista *pPolicyConfig;
-	ERole reserved = eConsole;
+    IPolicyConfigVista *pPolicyConfig;
+    ERole reserved = eConsole;
 
     HRESULT hr = CoCreateInstance(__uuidof(CPolicyConfigVistaClient), 
-		NULL, CLSCTX_ALL, __uuidof(IPolicyConfigVista), (LPVOID *)&pPolicyConfig);
-	if (SUCCEEDED(hr))
-	{		
-		hr = pPolicyConfig->SetDefaultEndpoint(id, eConsole);
-		hr = pPolicyConfig->SetDefaultEndpoint(id, eMultimedia);
-		hr = pPolicyConfig->SetDefaultEndpoint(id, eCommunications);
-		pPolicyConfig->Release();
-	}
+        NULL, CLSCTX_ALL, __uuidof(IPolicyConfigVista), (LPVOID *)&pPolicyConfig);
+    if (SUCCEEDED(hr))
+    {		
+        hr = pPolicyConfig->SetDefaultEndpoint(id.c_str(), eConsole);
+        hr = pPolicyConfig->SetDefaultEndpoint(id.c_str(), eMultimedia);
+        hr = pPolicyConfig->SetDefaultEndpoint(id.c_str(), eCommunications);
+        pPolicyConfig->Release();
+    }
 
-	return hr;
+    return hr;
 
 }
 
 HRESULT CDevicesManager::LoadAudioDevices()
 {
-	if(!pEnum)
-	{
-		return E_FAIL;
-	}
-	IMMDeviceCollection *devicesCollection=NULL;
-	IMMDevice *device=NULL;
-	IPropertyStore *pProps = NULL;
-	LPWSTR pwszID = NULL;
-	HRESULT hr=pEnum->EnumAudioEndpoints(eRender,DEVICE_STATE_ACTIVE,&devicesCollection);
-	RETURN_ON_ERROR(hr)
-	UINT count;
-	hr=devicesCollection->GetCount(&count);
-	RETURN_ON_ERROR(hr)
+    devices.clear();
+    if(!pEnum)
+    {
+        return E_FAIL;
+    }
+    IMMDeviceCollection *devicesCollection=NULL;
+    IMMDevice *device=NULL;    
+    LPWSTR pwszID = NULL;
+    HRESULT hr=pEnum->EnumAudioEndpoints(eRender,DEVICE_STATE_ACTIVE,&devicesCollection);
+    RETURN_ON_ERROR(hr)
+    UINT count;
+    hr=devicesCollection->GetCount(&count);
+    RETURN_ON_ERROR(hr)
 
-	for(UINT i=0;i<count;i++)
-	{
-		
-		hr=devicesCollection->Item(i,&device);
-		RETURN_ON_ERROR(hr)
-		
-		hr=device->GetId(&pwszID);
-		RETURN_ON_ERROR(hr)
-		hr=device->OpenPropertyStore(STGM_READ,&pProps);
-		RETURN_ON_ERROR(hr)
-		PROPVARIANT varName;
-		PropVariantInit(&varName);
-		hr=pProps->GetValue(PKEY_Device_FriendlyName,&varName);
-		RETURN_ON_ERROR(hr)
-		PROPVARIANT varIconPath;
-		PropVariantInit(&varIconPath);
-		hr=pProps->GetValue(PKEY_DeviceClass_IconPath,&varIconPath);
-		RETURN_ON_ERROR(hr)
+    for(UINT i=0;i<count;i++)
+    {
+        
+        hr=devicesCollection->Item(i,&device);
+        RETURN_ON_ERROR(hr)
+        
+        hr=device->GetId(&pwszID);
+        RETURN_ON_ERROR(hr)
+        addDevice(device, pwszID);
 
-		AUDIODEVICE audioDeviceStruct;
-		audioDeviceStruct.deviceId=new WCHAR[wcslen(pwszID)+sizeof(WCHAR)];
-		wcscpy_s(audioDeviceStruct.deviceId,wcslen(pwszID)+sizeof(WCHAR),pwszID);
-		audioDeviceStruct.deviceName=new WCHAR[wcslen(varName.pwszVal)+sizeof(WCHAR)];
-		wcscpy_s(audioDeviceStruct.deviceName,wcslen(varName.pwszVal)+sizeof(WCHAR),varName.pwszVal);
-		ExtractDeviceIcons(varIconPath.pwszVal,&audioDeviceStruct.largeIcon,&audioDeviceStruct.smallIcon);
-
-		devices.push_back(audioDeviceStruct);
-
-		CoTaskMemFree(pwszID);
-		pwszID=NULL;
-		PropVariantClear(&varIconPath);
-		PropVariantClear(&varName);
-		SAFE_RELEASE(pProps)
-		SAFE_RELEASE(device)
-	}
+        CoTaskMemFree(pwszID);
+        pwszID=NULL;       
+        SAFE_RELEASE(device)
+    }
 
 Exit:
-	CoTaskMemFree(pwszID);
-	SAFE_RELEASE(devicesCollection)
-	SAFE_RELEASE(device)
-	SAFE_RELEASE(pProps)
-	return hr;
+    CoTaskMemFree(pwszID);
+    SAFE_RELEASE(devicesCollection)
+    SAFE_RELEASE(device)
+    return hr;
 }
+
+void CDevicesManager::addDevice(IMMDevice *device, LPCWSTR pwszID)
+{
+    IPropertyStore *pProps = NULL;
+    AudioDevice audioDeviceStruct;
+    HRESULT hr = device->OpenPropertyStore(STGM_READ, &pProps);
+    RETURN_ON_ERROR(hr)
+    PROPVARIANT varName;
+    PropVariantInit(&varName);
+    hr = pProps->GetValue(PKEY_Device_FriendlyName, &varName);
+    RETURN_ON_ERROR(hr)
+        PROPVARIANT varIconPath;
+    PropVariantInit(&varIconPath);
+    hr = pProps->GetValue(PKEY_DeviceClass_IconPath, &varIconPath);
+    RETURN_ON_ERROR(hr)
+    
+    audioDeviceStruct.deviceId.assign(pwszID);
+    audioDeviceStruct.deviceName.assign(varName.pwszVal);
+    HICON largeIcon, smallIcon;
+    if (ExtractDeviceIcons(varIconPath.pwszVal, &largeIcon, &smallIcon) > 1) {
+        audioDeviceStruct.largeIcon = std::make_shared<Icon>(largeIcon);
+        audioDeviceStruct.smallIcon = std::make_shared<Icon>(smallIcon);
+    }
+
+    devices.push_back(audioDeviceStruct);
+ Exit:
+    PropVariantClear(&varIconPath);
+    PropVariantClear(&varName);
+    SAFE_RELEASE(pProps)
+}
+
+
 UINT CDevicesManager::ExtractDeviceIcons(LPWSTR iconPath,HICON *iconLarge,HICON *iconSmall)
 {
-	TCHAR *filePath;
-	int iconIndex;
-	WCHAR* token=NULL;
-	filePath=wcstok_s(iconPath,L",",&token);
-	TCHAR *iconIndexStr=wcstok_s(NULL,L",",&token);
-	iconIndex=_wtoi(iconIndexStr);
-	TCHAR filePathExp[MAX_PATH];
-	ExpandEnvironmentStrings(filePath,filePathExp,MAX_PATH);
-	//HMODULE module=LoadLibraryEx(filePathExp,NULL,LOAD_LIBRARY_AS_DATAFILE|LOAD_LIBRARY_AS_IMAGE_RESOURCE);
-	return ExtractIconEx(filePathExp,iconIndex,iconLarge,iconSmall,1);
+    TCHAR *filePath;
+    int iconIndex;
+    WCHAR* token=NULL;
+    filePath=wcstok_s(iconPath,L",",&token);
+    TCHAR *iconIndexStr=wcstok_s(NULL,L",",&token);
+    iconIndex=_wtoi(iconIndexStr);
+    TCHAR filePathExp[MAX_PATH];
+    ExpandEnvironmentStrings(filePath,filePathExp,MAX_PATH);
+    //HMODULE module=LoadLibraryEx(filePathExp,NULL,LOAD_LIBRARY_AS_DATAFILE|LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+    return ExtractIconEx(filePathExp,iconIndex,iconLarge,iconSmall,1);
 }
-const std::vector<AUDIODEVICE>* CDevicesManager::GetAudioDevices() const
+const std::vector<AudioDevice>& CDevicesManager::GetAudioDevices() const
 {
-	return &devices;
+    return devices;
 }
 
-const PAUDIODEVICE CDevicesManager::GetDefaultDevice()
+bool CDevicesManager::GetDefaultDevice(AudioDevice& audioDevice)
 {
-	if(!pEnum)
-	{
-		return NULL;
-	}
-	
-	LPWSTR pwszID = NULL;
-	PAUDIODEVICE audioDevice=NULL;
-
-	IMMDevice *device;
-	HRESULT hr = pEnum->GetDefaultAudioEndpoint(eRender, eMultimedia, &device);
-	RETURN_ON_ERROR(hr)
-	hr=device->GetId(&pwszID);
-	RETURN_ON_ERROR(hr)	
-
-	for(auto it=devices.begin();it!=devices.end();++it)	
-	{
-		if(!wcscmp((*it).deviceId,pwszID))
-		{
-			audioDevice=&(*it);
-			break;
-		}
-	}
-
+    if(!pEnum)
+    {
+        return false;
+    }
+    bool found = false;
+    LPWSTR pwszID = NULL;
+    IMMDevice *immDevice;
+    HRESULT hr = pEnum->GetDefaultAudioEndpoint(eRender, eMultimedia, &immDevice);
+    RETURN_ON_ERROR(hr);
+    hr = immDevice->GetId(&pwszID);
+    RETURN_ON_ERROR(hr);
+    {
+        auto it = std::find_if(devices.begin(), devices.end(), [=](const AudioDevice& device){
+            return device.deviceId == pwszID;
+        });
+        if (it != devices.end()) {
+            audioDevice = *it;
+            found = true;
+        }
+    }
 Exit:	
-	CoTaskMemFree(pwszID);
-	SAFE_RELEASE(device)	
+    CoTaskMemFree(pwszID);
+    SAFE_RELEASE(immDevice);
 
-	return audioDevice;
+    return found;
 }
-
+bool CDevicesManager::GetDevice(LPCWSTR deviceId, AudioDevice& device)
+{
+    for (auto& d : devices) {
+        if (d.deviceId == deviceId) {
+            device = d;
+            return true;
+        }
+    }
+    return false;
+}
 HRESULT CDevicesManager::ClearAbsentDevices(PHKEY pkey)
 {
-	HRESULT hr=S_OK;	
-	DWORD index=0;	
-	DWORD lpcValues,lpcMaxValueNameLen;
-	HKEY key;
-	key=*pkey;
-	LONG result=::RegQueryInfoKey(key,NULL,NULL,NULL,NULL,NULL,NULL,&lpcValues,&lpcMaxValueNameLen,NULL,NULL,NULL);	
-	if(lpcValues<=0) return hr;
+    HRESULT hr=S_OK;	
+    DWORD index=0;	
+    DWORD lpcValues,lpcMaxValueNameLen;
+    HKEY key;
+    key=*pkey;
+    LONG result=::RegQueryInfoKey(key,NULL,NULL,NULL,NULL,NULL,NULL,&lpcValues,&lpcMaxValueNameLen,NULL,NULL,NULL);	
+    if(lpcValues<=0) return hr;
 
-	std::vector<LPWSTR> ids;
-	for(DWORD i=0;i<lpcValues;i++)
-	{
-		DWORD len=lpcMaxValueNameLen+1;
-		WCHAR *valName=new WCHAR[len];
-		::RegEnumValue(key,i,valName,&len,NULL,REG_NONE,NULL,NULL);
-		ids.push_back(valName);
-	}
+    std::vector<std::wstring> ids;
+    for(DWORD i=0;i<lpcValues;i++)
+    {
+        DWORD len=lpcMaxValueNameLen+1;
+        WCHAR *valName=new WCHAR[len];
+        ::RegEnumValue(key,i,valName,&len,NULL,REG_NONE,NULL,NULL);
+        ids.push_back(valName);
+        delete[] valName;
+    }
 
-	for(DWORD i=0;i<lpcValues;i++)
-	{
-		LPWSTR id=ids[i];
-		bool found=false;
-		for(auto it=devices.cbegin();it!=devices.cend();++it)
-		{
-			LPWSTR devKey=(*it).deviceId;
-			if(!wcscmp(id,devKey))
-			{
-				found=true;
-				break;
-			}
-		}
+    for(DWORD i=0;i<lpcValues;i++)
+    {
+        auto id=ids[i];
+        bool found=false;
+        for(auto it=devices.cbegin();it!=devices.cend();++it)
+        {
+            auto devKey=(*it).deviceId;
+            if(devKey == id)
+            {
+                found=true;
+                break;
+            }
+        }
 
-		if(!found)
-		{
-			hr=::RegDeleteValue(key,id);			
-		}
-	}
+        if(!found)
+        {
+            hr=::RegDeleteValue(key,id.c_str());			
+        }
+    }
 
 
-	return S_OK;
+    return S_OK;
+}
+void CDevicesManager::addDeviceAddedListener(device_listener listener)
+{
+    device_added_listener.push_back(listener);
+}
+void CDevicesManager::addDeviceRemovedListener(device_listener listener)
+{
+    device_removed_listener.push_back(listener);
+}
+void CDevicesManager::notifyDeviceAddedListeners(LPCWSTR deviceId)
+{
+    IMMDevice *device = NULL;
+    pEnum->GetDevice(deviceId, &device);
+    addDevice(device, deviceId);
+    for (auto& listener : device_added_listener) {
+        listener(deviceId);
+    }
+}
+void CDevicesManager::notifyDeviceRemovedListeners(LPCWSTR deviceId)
+{
+    LoadAudioDevices();
+    for (auto& listener : device_removed_listener) {
+        listener(deviceId);
+    }
 }

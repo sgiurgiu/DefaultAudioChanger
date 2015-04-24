@@ -30,6 +30,9 @@
     <ClCompile Include="DevicesManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MMNotificationClient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -50,7 +53,7 @@
     <ClInclude Include="DevicesManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Aero.h">
+    <ClInclude Include="MMNotificationClient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
