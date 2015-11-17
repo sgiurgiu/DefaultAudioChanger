@@ -265,28 +265,38 @@ void CMainDlg::SetDevicesManager(CDevicesManager* devicesManager)
 
 BOOL CMainDlg::ShowTrayIcon()
 {
+    AudioDevice defaultDevice;
+    if (!devicesManager->GetDefaultDevice(defaultDevice)) {
+        return false;
+    }
     if(!notifyIconData.cbSize)
     {
-        notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
+        notifyIconData.cbSize = sizeof(notifyIconData);
         notifyIconData.hWnd = m_hWnd;
         notifyIconData.uID = 1;
-        notifyIconData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+        notifyIconData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP | NIF_INFO;
+        notifyIconData.dwInfoFlags = NIIF_USER| NIIF_LARGE_ICON;
         notifyIconData.uCallbackMessage = WM_SYSTEMTRAYICON;
-        AudioDevice defaultDevice;		 
-        if (devicesManager->GetDefaultDevice(defaultDevice))
-        {
-            //apparently the icon that appears usually on the desktop is the large one
-            //the small one seems to be somewhat different (maybe it shows up under different circumstances)
-            notifyIconData.hIcon = defaultDevice.largeIcon->GetIcon();
-        }
-        //AtlLoadIconImage(IDR_MAINFRAME, LR_DEFAULTCOLOR, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON));
-        TCHAR sWindowText[MAX_PATH];
-        GetWindowText(sWindowText,MAX_PATH);
-        _tcscpy_s(notifyIconData.szTip, sWindowText);
+        notifyIconData.uTimeout = 1000;
+        //apparently the icon that appears usually on the desktop is the large one
+        //the small one seems to be somewhat different (maybe it shows up under different circumstances)
+        notifyIconData.hIcon = defaultDevice.largeIcon->GetIcon();
+        notifyIconData.hBalloonIcon = defaultDevice.largeIcon->GetIcon();
+        
+        _tcscpy_s(notifyIconData.szTip, defaultDevice.deviceName.c_str());
+        _tcscpy_s(notifyIconData.szInfo, defaultDevice.deviceName.c_str());
+        _tcscpy_s(notifyIconData.szInfoTitle ,L"Current Audio Device");
         return Shell_NotifyIcon(NIM_ADD, &notifyIconData);
     }
     else
     {
+        //apparently the icon that appears usually on the desktop is the large one
+        //the small one seems to be somewhat different (maybe it shows up under different circumstances)
+        notifyIconData.hIcon = defaultDevice.largeIcon->GetIcon();
+        notifyIconData.hBalloonIcon = defaultDevice.largeIcon->GetIcon();
+        _tcscpy_s(notifyIconData.szTip, defaultDevice.deviceName.c_str());
+        _tcscpy_s(notifyIconData.szInfo, defaultDevice.deviceName.c_str());
+
         return Shell_NotifyIcon(NIM_MODIFY, &notifyIconData);
     }
     

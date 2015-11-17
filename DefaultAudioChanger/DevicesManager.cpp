@@ -70,24 +70,20 @@ HRESULT CDevicesManager::SwitchDevices(const std::vector<std::wstring>& ids)
     if(ids.empty()) return E_FAIL;
     AudioDevice defaultDevice;	
     if (!GetDefaultDevice(defaultDevice)) return E_FAIL;
-    int defaultDeviceIndex=-1;
-    int count=0;
-    for(auto& id: ids)
-    {
-        if(defaultDevice.deviceId == id)
-        {
-            defaultDeviceIndex=count;
-            break;
-        }
-        count++;
+    
+    auto newDefault = ids.begin();
+    auto foundDefault = std::find_if(ids.cbegin(), ids.end(), [&defaultDevice](const auto& id) {
+        return defaultDevice.deviceId == id;
+    });
+    if (foundDefault != ids.end()) {
+        ++foundDefault;
+        newDefault = foundDefault;
     }
-    int newDefaultDeviceIndex=defaultDeviceIndex;
-    newDefaultDeviceIndex++;
-    if(newDefaultDeviceIndex>=(int)ids.size())
-    {
-        newDefaultDeviceIndex=0;
+    if (newDefault == ids.end()) {
+        newDefault = ids.begin();
     }
-    return SetDefaultDevice(ids.at(newDefaultDeviceIndex));
+    
+    return SetDefaultDevice(*newDefault);
 }
 
 
