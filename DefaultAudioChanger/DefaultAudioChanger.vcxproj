@@ -72,7 +72,7 @@
     <IntDir>$(OutDir)</IntDir>
     <OutDir>$(OutDir)</OutDir>
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\WTL90_4140_Final\Include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\WTL91_5321_Final\Include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IntDir>$(OutDir)</IntDir>
@@ -84,7 +84,7 @@
     <IntDir>$(OutDir)</IntDir>
     <OutDir>$(OutDir)</OutDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\WTL90_4140_Final\Include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\WTL91_5321_Final\Include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
