@@ -90,16 +90,18 @@ HRESULT STDMETHODCALLTYPE CMMNotificationClient::OnDefaultDeviceChanged(
 HRESULT STDMETHODCALLTYPE CMMNotificationClient::OnDeviceAdded(LPCWSTR pwstrDeviceId)
 {
    // _PrintDeviceName(pwstrDeviceId);
-    manager->notifyDeviceAddedListeners(pwstrDeviceId);
-    ATLTRACE2("  -->Added device\n");
+	ATLTRACE2("  -->Added device\n");
+   // manager->notifyDeviceAddedListeners(pwstrDeviceId);
+    
     return S_OK;
 };
 
 HRESULT STDMETHODCALLTYPE CMMNotificationClient::OnDeviceRemoved(LPCWSTR pwstrDeviceId)
 {
    // _PrintDeviceName(pwstrDeviceId);
-    manager->notifyDeviceRemovedListeners(pwstrDeviceId);
-    ATLTRACE2("  -->Removed device\n");
+	ATLTRACE2("  -->Removed device\n");
+  //  manager->notifyDeviceRemovedListeners(pwstrDeviceId);
+    
     return S_OK;
 }
 HRESULT STDMETHODCALLTYPE CMMNotificationClient::OnDeviceStateChanged(
@@ -114,15 +116,19 @@ HRESULT STDMETHODCALLTYPE CMMNotificationClient::OnDeviceStateChanged(
     {
     case DEVICE_STATE_ACTIVE:
         pszState = "ACTIVE";
+		manager->notifyDeviceAddedListeners(pwstrDeviceId);
         break;
     case DEVICE_STATE_DISABLED:
         pszState = "DISABLED";
+		manager->notifyDeviceRemovedListeners(pwstrDeviceId);
         break;
     case DEVICE_STATE_NOTPRESENT:
         pszState = "NOTPRESENT";
+		manager->notifyDeviceRemovedListeners(pwstrDeviceId);
         break;
     case DEVICE_STATE_UNPLUGGED:
         pszState = "UNPLUGGED";
+		manager->notifyDeviceRemovedListeners(pwstrDeviceId);
         break;
     }
 

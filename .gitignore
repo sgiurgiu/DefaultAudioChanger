@@ -5,3 +5,5 @@ x64/
 *.suo
 *.vcxproj.user
 ipch/
+/.vs/DefaultAudioChanger/v15
+/DefaultAudioChanger.VC.db

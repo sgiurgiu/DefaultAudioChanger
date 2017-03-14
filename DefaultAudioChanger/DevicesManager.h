@@ -63,7 +63,7 @@ public:
     HRESULT ClearAbsentDevices(PHKEY pkey);
     void addDeviceAddedListener(device_listener listener);
     void addDeviceRemovedListener(device_listener listener);
-    bool GetDevice(LPCWSTR deviceId, AudioDevice& device);
+    bool GetDevice(LPCWSTR deviceId, AudioDevice** device);
 private:
     UINT ExtractDeviceIcons(LPWSTR iconPath,HICON *iconLarge,HICON *iconSmall);
     void notifyDeviceAddedListeners(LPCWSTR deviceId);

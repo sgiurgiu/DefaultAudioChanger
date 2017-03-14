@@ -234,32 +234,12 @@ LRESULT CMainDlg::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 void CMainDlg::SetDevicesManager(CDevicesManager* devicesManager)
 {
     this->devicesManager=devicesManager;
-    devicesManager->addDeviceAddedListener([&](LPCWSTR deviceId){
-        AudioDevice device;
-        CMenuHandle menu = popupMenu.GetSubMenu(0);
-        if (devicesManager->GetDevice(deviceId, device)) {
-            CImageList imgList = listView.GetImageList(LVSIL_SMALL);
-            imgList.AddIcon(device.largeIcon->GetIcon());
-            int count = listView.GetItemCount();
-            listView.AddItem(count, 0, device.deviceName.c_str(), count);
-            listView.SetItemData(count, (DWORD_PTR)&device);
-            listView.SetColumnWidth(count, LVSCW_AUTOSIZE);
-            DWORD keyType;
-            LONG regOpResult = ::RegQueryValueEx(deviceSettingsKey, device.deviceId.c_str(), NULL, &keyType, NULL, NULL);
-            if (regOpResult == ERROR_SUCCESS)
-            {
-                listView.SetCheckState(count, TRUE);
-            }
-            size_t menuItemLen = device.deviceName.length() + 10;
-            std::wstring menuName(L"&");
-            menuName += std::to_wstring(count + 1);
-            menuName += L" ";
-            menuName += device.deviceName;
-            menu.AppendMenu(MF_ENABLED | MF_STRING, WM_USER + count + 1, menuName.c_str());
-        }
+    devicesManager->addDeviceAddedListener([this](LPCWSTR deviceId){
+		LoadInitialDeviceList();
     });
     devicesManager->addDeviceRemovedListener([&](LPCWSTR deviceId){
-        //
+		ATLTRACE2(L"Device removed %S\n", deviceId);
+		LoadInitialDeviceList();
     });
 }
 

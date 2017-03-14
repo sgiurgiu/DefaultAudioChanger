@@ -70,14 +70,13 @@ HRESULT CDevicesManager::SwitchDevices(const std::vector<std::wstring>& ids)
     if(ids.empty()) return E_FAIL;
     AudioDevice defaultDevice;	
     if (!GetDefaultDevice(defaultDevice)) return E_FAIL;
-    
-    auto newDefault = ids.begin();
+        
     auto foundDefault = std::find_if(ids.cbegin(), ids.end(), [&defaultDevice](const auto& id) {
         return defaultDevice.deviceId == id;
     });
-    if (foundDefault != ids.end()) {
-        ++foundDefault;
-        newDefault = foundDefault;
+	auto newDefault = foundDefault;
+    if (newDefault  != ids.end()) {
+        ++newDefault;
     }
     if (newDefault == ids.end()) {
         newDefault = ids.begin();
@@ -149,12 +148,12 @@ void CDevicesManager::addDevice(IMMDevice *device, LPCWSTR pwszID)
     IPropertyStore *pProps = NULL;
     AudioDevice audioDeviceStruct;
     HRESULT hr = device->OpenPropertyStore(STGM_READ, &pProps);
-    RETURN_ON_ERROR(hr)
+	RETURN_ON_ERROR(hr)
     PROPVARIANT varName;
     PropVariantInit(&varName);
     hr = pProps->GetValue(PKEY_Device_FriendlyName, &varName);
     RETURN_ON_ERROR(hr)
-        PROPVARIANT varIconPath;
+    PROPVARIANT varIconPath;
     PropVariantInit(&varIconPath);
     hr = pProps->GetValue(PKEY_DeviceClass_IconPath, &varIconPath);
     RETURN_ON_ERROR(hr)
@@ -221,11 +220,11 @@ Exit:
 
     return found;
 }
-bool CDevicesManager::GetDevice(LPCWSTR deviceId, AudioDevice& device)
+bool CDevicesManager::GetDevice(LPCWSTR deviceId, AudioDevice** device)
 {
     for (auto& d : devices) {
         if (d.deviceId == deviceId) {
-            device = d;
+            *device = &d;
             return true;
         }
     }
@@ -284,17 +283,17 @@ void CDevicesManager::addDeviceRemovedListener(device_listener listener)
 }
 void CDevicesManager::notifyDeviceAddedListeners(LPCWSTR deviceId)
 {
-    IMMDevice *device = NULL;
-    pEnum->GetDevice(deviceId, &device);
-    addDevice(device, deviceId);
-    for (auto& listener : device_added_listener) {
-        listener(deviceId);
-    }
+	LoadAudioDevices();
+	for (auto& listener : device_added_listener) {
+		listener(deviceId);
+	}
+
 }
 void CDevicesManager::notifyDeviceRemovedListeners(LPCWSTR deviceId)
 {
-    LoadAudioDevices();
+	LoadAudioDevices();
     for (auto& listener : device_removed_listener) {
         listener(deviceId);
     }
+	
 }
