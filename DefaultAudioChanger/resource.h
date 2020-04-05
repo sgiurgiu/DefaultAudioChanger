@@ -18,10 +18,10 @@
 #define IDC_WINSTARTUP_CHECK            1010
 #define IDC_BUTTON1                     1011
 #define IDC_RELOAD_BUTTON               1011
-#define ID_POPUPMENU_OPTIONS            32775
-#define ID_POPUPMENU_EXIT               32776
-#define ID_POPUPMENU_                   32777
-#define ID_POPUPMENU_SWITCH             32778
+#define ID_POPUPMENU_SWITCH             32775
+#define ID_POPUPMENU_OPTIONS            32776
+#define ID_POPUPMENU_EXIT               32777
+#define ID_POPUPMENU_                   32778
 
 // Next default values for new objects
 // 

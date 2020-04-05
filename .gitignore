@@ -1,9 +1,10 @@
 Debug/
 Release/
 x64/
+*.aps
 *.sdf
 *.suo
 *.vcxproj.user
 ipch/
-/.vs/DefaultAudioChanger/v15
+/.vs/
 /DefaultAudioChanger.VC.db

@@ -54,7 +54,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 
     popupMenu.LoadMenu(IDR_POPUP_MENU);
     CMenuHandle menu = popupMenu.GetSubMenu(0);
-    menu.SetMenuDefaultItem(ID_POPUPMENU_OPTIONS, FALSE);
+    menu.SetMenuDefaultItem(ID_POPUPMENU_SWITCH, FALSE);
 
     // set icons
     if(!LoadDevicesIcons())
@@ -301,7 +301,7 @@ LRESULT CMainDlg::OnSystemTrayIcon(UINT, WPARAM wParam, LPARAM lParam)
     switch(lParam)
     {
     case WM_LBUTTONDBLCLK:
-        SendMessage(WM_COMMAND, ID_POPUPMENU_OPTIONS);
+        SendMessage(WM_COMMAND, ID_POPUPMENU_SWITCH);
         break;
     case WM_RBUTTONUP:
         {
