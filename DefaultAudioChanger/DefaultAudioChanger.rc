@@ -187,10 +187,9 @@ IDR_POPUP_MENU MENU
 BEGIN
     POPUP "PopupMenu"
     BEGIN
+        MENUITEM "&Switch",                     ID_POPUPMENU_SWITCH
         MENUITEM "&Options",                    ID_POPUPMENU_OPTIONS
         MENUITEM "E&xit",                       ID_POPUPMENU_EXIT
-        MENUITEM "&Switch",                     ID_POPUPMENU_SWITCH
-        MENUITEM SEPARATOR
     END
 END
 
